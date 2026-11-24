@@ -1,0 +1,507 @@
+{
+  "info": {
+    "_postman_id": "lab-scheduler-collection-v1",
+    "name": "Lab Sample Scheduler API Collection",
+    "description": "Complete Postman collection for testing all REST endpoints of the Lab Sample Scheduler system, including Authentication, Sample Lifecycle, Machine Management, Priority Queue, SLA Reports, and Admin Configurations.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "staffUsername",
+      "value": "staff",
+      "type": "string"
+    },
+    {
+      "key": "staffPassword",
+      "value": "staff123",
+      "type": "string"
+    },
+    {
+      "key": "adminUsername",
+      "value": "admin",
+      "type": "string"
+    },
+    {
+      "key": "adminPassword",
+      "value": "admin123",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "POST Login (Validate Credentials)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"staff\",\n  \"password\": \"staff123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Validates credentials and returns assigned role (ROLE_STAFF or ROLE_ADMIN). Public endpoint."
+          }
+        },
+        {
+          "name": "GET Current Profile (/api/auth/me)",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "{{staffUsername}}", "type": "string" },
+                { "key": "password", "value": "{{staffPassword}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "me"]
+            },
+            "description": "Returns details of the currently authenticated user session."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Sample Management",
+      "item": [
+        {
+          "name": "POST Register New Sample",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "{{staffUsername}}", "type": "string" },
+                { "key": "password", "value": "{{staffPassword}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"testType\": \"Blood\",\n  \"priority\": \"HIGH\",\n  \"receivedTime\": \"2026-11-19T10:00:00\",\n  \"targetMinutes\": 30\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/samples",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "samples"]
+            },
+            "description": "Registers a new sample and triggers automated scheduling. Priority can be EMERGENCY, HIGH, or NORMAL."
+          }
+        },
+        {
+          "name": "POST Complete Sample",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "{{staffUsername}}", "type": "string" },
+                { "key": "password", "value": "{{staffPassword}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/samples/S001/complete",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "samples", "S001", "complete"]
+            },
+            "description": "Completes sample processing, frees the machine slot, and reallocates the highest-priority waiting sample."
+          }
+        },
+        {
+          "name": "POST Put Sample On Hold",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "{{staffUsername}}", "type": "string" },
+                { "key": "password", "value": "{{staffPassword}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/samples/S002/hold",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "samples", "S002", "hold"]
+            },
+            "description": "Places a sample on hold (status ON_HOLD) and removes it from the active priority queue."
+          }
+        },
+        {
+          "name": "POST Release Sample From Hold",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "{{staffUsername}}", "type": "string" },
+                { "key": "password", "value": "{{staffPassword}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/samples/S002/release",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "samples", "S002", "release"]
+            },
+            "description": "Releases an on-hold sample back to the priority queue and triggers dispatch."
+          }
+        },
+        {
+          "name": "GET Sample Audit History",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "{{staffUsername}}", "type": "string" },
+                { "key": "password", "value": "{{staffPassword}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/samples/S001/history",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "samples", "S001", "history"]
+            },
+            "description": "Returns full chronological audit log of status transitions and assignments for a sample."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Machine Management",
+      "item": [
+        {
+          "name": "GET All Machines",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "{{staffUsername}}", "type": "string" },
+                { "key": "password", "value": "{{staffPassword}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/machines",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "machines"]
+            },
+            "description": "Retrieves all laboratory machines, current workloads, capacities, and supported test types."
+          }
+        },
+        {
+          "name": "POST Mark Machine Down",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "{{staffUsername}}", "type": "string" },
+                { "key": "password", "value": "{{staffPassword}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/machines/M1/down",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "machines", "M1", "down"]
+            },
+            "description": "Marks a machine as unavailable for maintenance. Active runs finish, but no new samples will be dispatched to it."
+          }
+        },
+        {
+          "name": "POST Mark Machine Up",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "{{staffUsername}}", "type": "string" },
+                { "key": "password", "value": "{{staffPassword}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/machines/M1/up",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "machines", "M1", "up"]
+            },
+            "description": "Restores machine to active service and triggers scheduling from the queue."
+          }
+        },
+        {
+          "name": "POST Create Machine (Admin Only)",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "{{adminUsername}}", "type": "string" },
+                { "key": "password", "value": "{{adminPassword}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"M3\",\n  \"name\": \"Rapid Automated Analyzer 3000\",\n  \"supportedTestTypes\": [\"Blood\", \"Urine\"],\n  \"capacity\": 2,\n  \"available\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/machines",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "machines"]
+            },
+            "description": "Admin only: Dynamically creates a new machine in the lab system."
+          }
+        },
+        {
+          "name": "PUT Update Machine (Admin Only)",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "{{adminUsername}}", "type": "string" },
+                { "key": "password", "value": "{{adminPassword}}", "type": "string" }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"M3\",\n  \"name\": \"Rapid Automated Analyzer 3000 Pro\",\n  \"supportedTestTypes\": [\"Blood\", \"Urine\", \"Thyroid\"],\n  \"capacity\": 3,\n  \"available\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/machines/M3",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "machines", "M3"]
+            },
+            "description": "Admin only: Updates an existing machine's configuration and recalculates scheduling allocations."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Priority Queue",
+      "item": [
+        {
+          "name": "GET Priority Queue",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "{{staffUsername}}", "type": "string" },
+                { "key": "password", "value": "{{staffPassword}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/queue",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "queue"]
+            },
+            "description": "Retrieves all waiting samples ordered by priority rank, earliest deadline, and arrival time."
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Daily Reports & Metrics",
+      "item": [
+        {
+          "name": "GET Daily Report (Today)",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "{{staffUsername}}", "type": "string" },
+                { "key": "password", "value": "{{staffPassword}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/daily",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "daily"]
+            },
+            "description": "Computes daily turnaround metrics: completed, pending, delayed, and on-hold counts."
+          }
+        },
+        {
+          "name": "GET Daily Report (Specific Date)",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "{{staffUsername}}", "type": "string" },
+                { "key": "password", "value": "{{staffPassword}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/daily?date=2026-11-18",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reports", "daily"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2026-11-18"
+                }
+              ]
+            },
+            "description": "Computes daily report for a specific historical date (ISO format YYYY-MM-DD)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Admin Configuration",
+      "item": [
+        {
+          "name": "POST Create Priority (Admin Only)",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "{{adminUsername}}", "type": "string" },
+                { "key": "password", "value": "{{adminPassword}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"STAT\",\n  \"rankOrder\": 1,\n  \"targetMinutes\": 10\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/priorities",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "priorities"]
+            },
+            "description": "Admin only: Inserts a new priority tier into the database."
+          }
+        },
+        {
+          "name": "PUT Update Priority (Admin Only)",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "{{adminUsername}}", "type": "string" },
+                { "key": "password", "value": "{{adminPassword}}", "type": "string" }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"EMERGENCY_UPDATED\",\n  \"rankOrder\": 1,\n  \"targetMinutes\": 12\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/priorities/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "priorities", "1"]
+            },
+            "description": "Admin only: Updates existing priority record."
+          }
+        },
+        {
+          "name": "POST Create Test Type (Admin Only)",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "{{adminUsername}}", "type": "string" },
+                { "key": "password", "value": "{{adminPassword}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Electrolytes\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/test-types",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test-types"]
+            },
+            "description": "Admin only: Inserts a new laboratory test type into the database."
+          }
+        },
+        {
+          "name": "PUT Update Test Type (Admin Only)",
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "{{adminUsername}}", "type": "string" },
+                { "key": "password", "value": "{{adminPassword}}", "type": "string" }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Blood Chemistry\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/test-types/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "test-types", "1"]
+            },
+            "description": "Admin only: Updates an existing test type name in the database."
+          }
+        }
+      ]
+    }
+  ]
+}
